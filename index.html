@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AimDojo — Aim Trainer</title>
+<meta name="description" content="AimDojo: aim trainer gratis dengan sensitivitas akurat (DPI × sens × yaw) untuk game FPS."><meta name="theme-color" content="#0a0e14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AF%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css"></head><body>
+<div class="top"><div class="brand">AIM<i>DOJO</i></div><div class="sp"></div><select id="langSel" aria-label="Language"></select></div>
+<div class="auth"><div class="box">
+ <div class="hero"><h1>🎯 AIM<span style="color:var(--ac)">DOJO</span></h1><p data-i="tag"></p></div>
+ <div class="card">
+  <div class="seg"><button id="tLogin" class="on" data-i="login"></button><button id="tSign" data-i="signup"></button></div>
+  <label data-i="email"></label><input id="em" type="email" autocomplete="email" placeholder="email@example.com">
+  <label data-i="pass"></label><input id="pw" type="password" autocomplete="current-password">
+  <div class="row" style="margin-top:14px"><button class="btn pri big" id="go"></button></div>
+  <p class="note" style="margin:10px 0 0"><a href="#" id="fg" data-i="forgot"></a></p>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div class="or" data-i="or"></div>
+  <div class="row"><button class="btn big" id="guest" data-i="guest"></button></div>
+  <p class="note" style="text-align:center;margin:10px 0 0" data-i="guestn"></p>
+ </div>
+ <p class="note" style="text-align:center;margin-top:16px"><a href="panduan.html" data-i="guide"></a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
+</div></div>
+<script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script><script src="lang.js"></script>
+<script>
+(()=>{const $=i=>document.getElementById(i),t=L.t;let mode='login',sb=null,key='';
+L.init();
+const c=window.AIMDOJO_CONFIG||{},url=String(c.supabaseUrl||'').trim().replace(/\/+$/,'');key=String(c.supabaseAnonKey||'').trim();
+const okCfg=/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)&&key&&!/PASTE_/i.test(url+key)&&window.supabase&&window.supabase.createClient;
+const say=(s,raw)=>$('msg').textContent=raw?s:t(s);
+function paint(){$('go').textContent=t(mode==='login'?'login':'signup');$('tLogin').classList.toggle('on',mode==='login');$('tSign').classList.toggle('on',mode==='signup');$('pw').autocomplete=mode==='login'?'current-password':'new-password'}
+document.addEventListener('langchange',paint);paint();
+$('tLogin').onclick=()=>{mode='login';paint()};$('tSign').onclick=()=>{mode='signup';paint()};
+$('guest').onclick=()=>{try{localStorage.setItem('aimdojoGuest','1')}catch(e){}location.href='train.html'};
+if(!okCfg){say('nocfg');$('go').disabled=true;$('fg').classList.add('hid')}
+else{sb=window.supabase.createClient(url,key);
+ sb.auth.getSession().then(r=>{if(r.data.session&&!location.hash.includes('type=recovery')){try{localStorage.removeItem('aimdojoGuest')}catch(e){}location.href='train.html'}});
+ sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){mode='recover';$('go').textContent=t('newpass');$('em').classList.add('hid');$('em').previousElementSibling.classList.add('hid');$('fg').classList.add('hid');$('tLogin').parentNode.classList.add('hid')}});
+ $('go').onclick=async()=>{const e=$('em').value.trim(),p=$('pw').value;
+  if(mode==='recover'){if(p.length<8)return say('pass');const r=await sb.auth.updateUser({password:p});if(r.error)return say(r.error.message,1);location.href='train.html';return}
+  if(!e||p.length<8)return say('pass');$('go').disabled=true;say('…',1);
+  try{if(mode==='login'){const r=await sb.auth.signInWithPassword({email:e,password:p});if(r.error)throw r.error;try{localStorage.removeItem('aimdojoGuest')}catch(_){}location.href='train.html'}
+  else{const r=await sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}});if(r.error)throw r.error;if(r.data.session){location.href='train.html'}else say('ok_signup')}}
+  catch(x){say(x.message,1)}finally{$('go').disabled=false}};
+ $('fg').onclick=async ev=>{ev.preventDefault();const e=$('em').value.trim();if(!e)return $('em').focus();const r=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});say(r.error?r.error.message:'ok_reset',!!r.error)};
+}})();
+</script></body></html>
